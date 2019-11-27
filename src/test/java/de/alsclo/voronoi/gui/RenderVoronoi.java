@@ -5,6 +5,7 @@ import de.alsclo.voronoi.graph.Point;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,9 +38,8 @@ public class RenderVoronoi extends JFrame{
     public static void main(String[] args) {
         Random r = new Random(9235563856L);
         Stream<Point> gen = Stream.generate(() -> new Point(r.nextDouble() * size, r.nextDouble() * size));
-        Voronoi diagram = new Voronoi(gen.limit(1024).collect(Collectors.toList())).relax().relax();
-//        assert diagram.getGraph().edgeStream().noneMatch(e -> e.getA() == null && e.getB() == null);
-
+        Collection<Point> randPoints = gen.limit(100).collect(Collectors.toList());
+        Voronoi diagram = new Voronoi(randPoints, 1);
         diagram.getGraph().edgeStream().forEach(System.out::println);
         RenderVoronoi frame = new RenderVoronoi(diagram);
         frame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
