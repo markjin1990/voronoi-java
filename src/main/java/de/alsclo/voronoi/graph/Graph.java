@@ -20,6 +20,12 @@ public class Graph {
 	public void addEdge(Edge e) {
 		edges.put(e.getSites1(), e.getSites2(), e);
 		regionNeighbors.addAdjacentSites(e.getSites1(), e.getSites2());
+		
+		keys2Polygon.put(e.getSites1(), e.getA());
+		keys2Polygon.put(e.getSites1(), e.getB());
+		keys2Polygon.put(e.getSites2(), e.getA());
+		keys2Polygon.put(e.getSites2(), e.getB());
+
 	}
 
 	/**
@@ -43,6 +49,10 @@ public class Graph {
 	
 	public Set<Set<Point>> getNeighbors(Set<Point> regionKey) {
 		return this.regionNeighbors.getNeighbors(regionKey);
+	}
+	
+	public Polygon getPolygon(Set<Point> regionKey) {
+		return this.keys2Polygon.get(regionKey);
 	}
 
 	public Graph clone() {

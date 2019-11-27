@@ -6,6 +6,7 @@ import de.alsclo.voronoi.event.SiteEvent;
 import de.alsclo.voronoi.graph.Edge;
 import de.alsclo.voronoi.graph.Graph;
 import de.alsclo.voronoi.graph.Point;
+import de.alsclo.voronoi.graph.Polygon;
 import de.alsclo.voronoi.graph.Vertex;
 import lombok.Getter;
 import lombok.val;
@@ -13,6 +14,7 @@ import lombok.val;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.lang.Math;
 
 /**
  * The main class and entry point of voronoi-java. Constructing a new instance
@@ -26,7 +28,7 @@ public class Voronoi {
 	private final Graph graph;
 	@Getter
 	private Queue<Graph> voronoiQ = new LinkedList<Graph>();
-	
+
 	@Getter
 	private final int order;
 
@@ -40,22 +42,22 @@ public class Voronoi {
 		this.order = k;
 		Graph curGraph = findOriginalVoronoi(points);
 		while (k > 1) {
-			// Save this graph to queue		
+			// Save this graph to queue
 			voronoiQ.add(curGraph);
 			curGraph = findHigherOrderVoronoi(curGraph);
 			k--;
 		}
 		this.graph = curGraph;
 	}
-	
-	
+
 	public Voronoi(Collection<Point> points) {
 		this.order = 1;
 		this.graph = findOriginalVoronoi(points);
 	}
-	
+
 	/**
 	 * Find Voronoi diagram using Fortune's algorithm
+	 * 
 	 * @param points
 	 */
 	public Graph findOriginalVoronoi(Collection<Point> points) {
@@ -75,18 +77,53 @@ public class Voronoi {
 		}
 		return tempGraph;
 	}
-	
+
 	public Graph findHigherOrderVoronoi(Graph graph) {
 		Graph newGraph = graph.clone();
-		
+
 		// Partition each polygon
 		for (Set<Point> regionKey : newGraph.getRegionKeys()) {
-//			List<Edge> newGraph.get
+			Polygon targetPolygon = this.graph.getPolygon(regionKey);
+			Set<Set<Point>> neighborRegionKeys = graph.getNeighbors(regionKey);
+			
+			// Sort neighbor region key clockwise
+			List<Set<Point>> sortedNeighborRegionKeys = new ArrayList<Set<Point>>(
+					neighborRegionKeys);
+			Collections.sort(sortedNeighborRegionKeys, new Comparator() {
+				@Override
+				public int compare(Object o1, Object o2) {
+					Set<Point> k1 = ((Set<Point>) o1);
+					Set<Point> k2 = ((Set<Point>) o2);
+
+					Polygon p1 = graph.getPolygon(k1);
+					Polygon p2 = graph.getPolygon(k2);
+
+					Point centroidPolygon1 = p1.getCentroid();
+					Point centroidPolygon2 = p2.getCentroid();
+					Point centroidTarPolygon = targetPolygon.getCentroid();
+
+					double angle1 = Math.toDegrees(Math.atan2(
+							centroidPolygon1.x - centroidTarPolygon.x,
+							centroidPolygon1.y - centroidTarPolygon.y));
+					// Keep angle between 0 and 360
+					angle1 = angle1 + Math.ceil(-angle1 / 360) * 360;
+					
+					double angle2 = Math.toDegrees(Math.atan2(
+							centroidPolygon2.x - centroidTarPolygon.x,
+							centroidPolygon2.y - centroidTarPolygon.y));
+					// Keep angle between 0 and 360
+					angle2 = angle2 + Math.ceil(-angle2 / 360) * 360;
+
+					if (angle1 == angle2) {
+						return 0;
+					} else
+						return angle1 > angle2 ? 1 : -1;
+				}
+			});			
 		}
-		
+
 		// Merge partitioned polygons
-		
-		
+
 		return newGraph;
 	}
 
@@ -145,7 +182,7 @@ public class Voronoi {
 		List<Point> newPoints = graph.getSitePoints().stream().map(site -> {
 			Set<Point> key = new HashSet<Point>();
 			key.add(site);
-			
+
 			Set<Vertex> vertices = Stream
 					.concat(edges.get(key).stream().map(Edge::getA),
 							edges.get(key).stream().map(Edge::getB))

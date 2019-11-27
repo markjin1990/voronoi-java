@@ -8,28 +8,43 @@ import java.util.Set;
 
 public class Polygon {
 	private Set<Point> key;
-	private List<Edge> edeges;
+	private List<Vertex> vertices;
+	private Point centroid;
+	private List<Double> angles;
 
 	public Polygon(Set<Point> regionKey) {
-		edeges = new LinkedList<Edge>();
+		vertices = new LinkedList<Vertex>();
 		key = regionKey;
 	}
 
 	// return size
 	public int size() {
-		return edeges.size();
+		return vertices.size();
 	}
 
 	// edge
-	public void add(Edge e) {
-		edeges.add(e);
+	public void add(Vertex e) {
+		vertices.add(e);
+	}
+	
+	/**
+	 * Get the centroid of this polygon
+	 * @return
+	 */
+	public Point getCentroid() {
+		if (centroid == null) {
+			double meanX = this.vertices.stream().mapToDouble(e -> e.getLocation().x).average().getAsDouble();
+			double meanY = this.vertices.stream().mapToDouble(e -> e.getLocation().y).average().getAsDouble();
+			centroid = new Point(meanX, meanY);
+		}
+		return centroid;
 	}
 
 	public String toString() {
 		if (size() == 0)
 			return "[ ]";
 		String s = "";
-		List<Edge> l = new ArrayList<Edge>(edeges);
+		List<Vertex> l = new ArrayList<Vertex>(vertices);
 		s = s + "[ ";
 		for (int i = 0; i <= size(); i++)
 			s = s + l.get(i) + " ";
